@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD API Tester</title>
+    <!-- Add Bootstrap CDN link -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        /* Add some additional styling as needed */
+        body {
+            padding: 20px;
+        }
+
+        h2,
+        h3,
+        h4 {
+            margin-top: 20px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>CRUD API Tester</h2>
+
+        <!-- Patients Section -->
+        <h3>Patients</h3>
+        <button class="btn btn-primary" id="getPatientsBtn">Get Patients</button>
+
+        <!-- Display Patients in a Table -->
+        <h4>Patients Data</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                </tr>
+            </thead>
+            <tbody id="patientsTableBody">
+                <!-- Patient data will be inserted here dynamically -->
+            </tbody>
+        </table>
+
+        <h4>Add/Edit Patient</h4>
+        <form id="patientForm">
+            <div class="mb-3">
+                <label for="patientName" class="form-label">Name:</label>
+                <input type="text" class="form-control" id="patientName" required>
+            </div>
+            <div class="mb-3">
+                <label for="patientAge" class="form-label">Age:</label>
+                <input type="number" class="form-control" id="patientAge" required>
+            </div>
+            <div class="mb-3">
+                <label for="patientEmail" class="form-label">Email:</label>
+                <input type="email" class="form-control" id="patientEmail" required>
+            </div>
+            <div class="mb-3">
+                <label for="patientPhone" class="form-label">Phone:</label>
+                <input type="tel" class="form-control" id="patientPhone" required>
+            </div>
+            <button type="button" class="btn btn-primary" id="submitPatientBtn">Submit</button>
+        </form>
+
+        <h4>Delete Patient</h4>
+        <form id="deletePatientForm">
+            <div class="mb-3">
+                <label for="patientIdToDelete" class="form-label">ID to Delete:</label>
+                <input type="number" class="form-control" id="patientIdToDelete" required>
+            </div>
+            <button type="button" class="btn btn-danger" id="deletePatientBtn">Delete</button>
+        </form>
+
+        <!-- Doctors Section -->
+        <h3>Doctors</h3>
+        <button class="btn btn-primary" id="getDoctorsBtn">Get Doctors</button>
+
+        <!-- Display Doctors in a Table -->
+        <h4>Doctors Data</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Specialization</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                </tr>
+            </thead>
+            <tbody id="doctorsTableBody">
+                <!-- Doctor data will be inserted here dynamically -->
+            </tbody>
+        </table>
+
+        <h4>Add/Edit Doctor</h4>
+        <form id="doctorForm">
+            <div class="mb-3">
+                <label for="doctorName" class="form-label">Name:</label>
+                <input type="text" class="form-control" id="doctorName" required>
+            </div>
+            <div class="mb-3">
+                <label for="doctorSpecialization" class="form-label">Specialization:</label>
+                <input type="text" class="form-control" id="doctorSpecialization" required>
+            </div>
+            <div class="mb-3">
+                <label for="doctorEmail" class="form-label">Email:</label>
+                <input type="email" class="form-control" id="doctorEmail" required>
+            </div>
+            <div class="mb-3">
+                <label for="doctorPhone" class="form-label">Phone:</label>
+                <input type="tel" class="form-control" id="doctorPhone" required>
+            </div>
+            <button type="button" class="btn btn-primary" id="submitDoctorBtn">Submit</button>
+        </form>
+
+        <h4>Delete Doctor</h4>
+        <form id="deleteDoctorForm">
+            <div class="mb-3">
+                <label for="doctorIdToDelete" class="form-label">ID to Delete:</label>
+                <input type="number" class="form-control" id="doctorIdToDelete" required>
+            </div>
+            <button type="button" class="btn btn-danger" id="deleteDoctorBtn">Delete</button>
+        </form>
+    </div>
+
+    <!-- Add Bootstrap JS and Popper.js CDN links -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const apiUrl = 'crud.php';
+
+            function handleResponse(response) {
+                console.log('Response Headers:', response.headers);
+                console.log('Response Status:', response.status);
+
+                if (!response.ok) {
+                    console.error('Error Response:', response.statusText);
+                    throw new Error('Server returned an error.');
+                }
+
+                const contentType = response.headers.get('content-type');
+
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    console.error('Error: Invalid content type. Expected JSON.');
+                    throw new Error('Invalid content type. Expected JSON.');
+                }
+            }
+
+            function validateInput(name, age, email, phone) {
+                if (!name || !age || !email || !phone) {
+                    alert('All fields are required.');
+                    return false;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    alert('Please enter a valid email address.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            function submitPatient() {
+                const name = document.getElementById('patientName').value;
+                const age = parseInt(document.getElementById('patientAge').value, 10);
+                const email = document.getElementById('patientEmail').value;
+                const phone = document.getElementById('patientPhone').value;
+
+                if (!validateInput(name, age, email, phone)) {
+                    return;
+                }
+
+                fetch(apiUrl + '?patients', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        age: age,
+                        email: email,
+                        phone: phone,
+                    }),
+                })
+                    .then(handleResponse)
+                    .then(data => console.log('Response:', data))
+                    .catch(error => console.error('Error:', error.message));
+            }
+
+            function deletePatient() {
+                const idToDelete = parseInt(document.getElementById('patientIdToDelete').value, 10);
+                console.log('idToDelete:', idToDelete);
+                fetch(apiUrl + '?patients', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: idToDelete,
+                    }),
+                })
+                    .then(handleResponse)
+                    .then(data => console.log('Response:', data))
+                    .catch(error => console.error('Error:', error.message));
+            }
+
+            function getPatients() {
+                return fetch(apiUrl + '?patients')
+                    .then(handleResponse)
+                    .catch(error => console.error('Error:', error.message));
+            }
+
+            function displayPatients(data) {
+                const patientsTableBody = document.getElementById('patientsTableBody');
+                patientsTableBody.innerHTML = ''; // Clear existing data
+
+                data.forEach(patient => {
+                    const row = patientsTableBody.insertRow();
+                    row.innerHTML = `<td>${patient.id}</td>
+                                     <td>${patient.name}</td>
+                                     <td>${patient.age}</td>
+                                     <td>${patient.email}</td>
+                                     <td>${patient.phone}</td>`;
+                });
+            }
+
+            function submitDoctor() {
+                const name = document.getElementById('doctorName').value;
+                const specialization = document.getElementById('doctorSpecialization').value;
+                const email = document.getElementById('doctorEmail').value;
+                const phone = document.getElementById('doctorPhone').value;
+
+                if (!validateInput(name, specialization, email, phone)) {
+                    return;
+                }
+
+                fetch(apiUrl + '?doctors', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        specialization: specialization,
+                        email: email,
+                        phone: phone,
+                    }),
+                })
+                    .then(handleResponse)
+                    .then(data => console.log('Response:', data))
+                    .catch(error => console.error('Error:', error.message));
+            }
+
+            function deleteDoctor() {
+                const idToDelete = parseInt(document.getElementById('doctorIdToDelete').value, 10);
+                console.log("idToDelete:",idToDelete);
+                fetch(apiUrl + '?doctors', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: idToDelete,
+                    }),
+                })
+                    .then(handleResponse)
+                    .then(data => console.log('Response:', data))
+                    .catch(error => console.error('Error:', error.message));
+            }
+
+            function getDoctors() {
+                return fetch(apiUrl + '?doctors')
+                    .then(handleResponse)
+                    .catch(error => console.error('Error:', error.message));
+            }
+
+            function displayDoctors(data) {
+                const doctorsTableBody = document.getElementById('doctorsTableBody');
+                doctorsTableBody.innerHTML = ''; // Clear existing data
+
+                data.forEach(doctor => {
+                    const row = doctorsTableBody.insertRow();
+                    row.innerHTML = `<td>${doctor.id}</td>
+                                     <td>${doctor.name}</td>
+                                     <td>${doctor.specialization}</td>
+                                     <td>${doctor.email}</td>
+                                     <td>${doctor.phone}</td>`;
+                });
+            }
+
+            // Event listeners
+            document.getElementById('getPatientsBtn').addEventListener('click', function () {
+                getPatients().then(displayPatients);
+            });
+
+            document.getElementById('submitPatientBtn').addEventListener('click', submitPatient);
+            document.getElementById('deletePatientBtn').addEventListener('click', deletePatient);
+            document.getElementById('getDoctorsBtn').addEventListener('click', function () {
+                getDoctors().then(displayDoctors);
+            });
+
+            document.getElementById('submitDoctorBtn').addEventListener('click', submitDoctor);
+            document.getElementById('deleteDoctorBtn').addEventListener('click', deleteDoctor);
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
